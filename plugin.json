@@ -1,0 +1,12 @@
+{
+  "name": "TrigEdit",
+  "id": "trigedit",
+  "version": "1.0.0",
+  "description": "The Text Trigger Editor: the map's triggers as text in SCMDraft 2's TrigEdit syntax, so text from SCMDraft pastes in and text from here pastes back out. Compile checks it and says which line does not parse. Edits the mission briefing in the same syntax.",
+  "author": "Jeany",
+  "homepage": "https://github.com/scm-js/plugin-trigedit",
+  "entry": "plugin.ts",
+  "build": "dist/plugin.js",
+  "icon": "icon.svg",
+  "api": 1
+}
