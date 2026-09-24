@@ -1,6 +1,6 @@
 # TrigEdit
 
-A plugin for [scmJS](https://github.com/jeany55/scm-js), the browser-based StarCraft 1 /
+A plugin for [scmJS](https://github.com/scm-js/scm-js), the browser-based StarCraft 1 /
 Brood War map editor. It is the **Text Trigger Editor**: the map's triggers as text, in
 the syntax of SCMDraft 2's TrigEdit, so text from SCMDraft pastes in and text from here
 pastes back out.
@@ -42,7 +42,7 @@ per trigger with `Conditions:` and `Actions:` sections, a leading `;` disabling 
 a `Flags:` block for the trigger flags SCMDraft has no syntax for. Names are the map's own
 — units, locations, switches and strings resolve against the open map — and a name the
 map does not know prints as a bare number and parses back. The editor's guide has a
-[section on the syntax](https://github.com/jeany55/scm-js#the-text-trigger-editor).
+[section on the syntax](https://github.com/scm-js/scm-js#the-text-trigger-editor).
 
 ### Generated triggers
 
