@@ -1,6 +1,8 @@
 /**
- * The pure half of the Text Trigger Editor: the text the dialog shows, and the words
- * around it. Nothing here touches the editor, so it has the tests.
+ * The pure half of the Text Trigger Editor: the text the dialog shows, its fences and its
+ * gutter. Nothing here touches the editor, so it has the tests. The fences are part of the
+ * text, which is the file format, so they stay English; the words around the text are
+ * translated in `plugin.ts`.
  */
 import type { TriggerRecord } from "@scm-js/plugin-api";
 
@@ -68,15 +70,4 @@ export function gutterText(lines: number, errorLine: number | null): string {
   const out: string[] = [];
   for (let i = 1; i <= lines; i++) out.push(i === errorLine ? `▶${i}` : String(i));
   return out.join("\n");
-}
-
-/** The line under the editor: a count, the syntax, which list, and what just happened. */
-export function statusText(lines: number, briefing: boolean, status: string): string {
-  return `${lines} line${lines === 1 ? "" : "s"} · TrigEdit syntax · ${briefing ? "mission briefing (MBRF)" : "triggers (TRIG)"}${status ? ` · ${status}` : ""}`;
-}
-
-/** "Compiled 3 triggers." / "Compiled 1 briefing." */
-export function compiledText(count: number, briefing: boolean): string {
-  const what = briefing ? "briefing" : "trigger";
-  return `Compiled ${count} ${what}${count === 1 ? "" : "s"}.`;
 }

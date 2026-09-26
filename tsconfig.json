@@ -15,5 +15,5 @@
     "skipLibCheck": true,
     "noEmit": true
   },
-  "include": ["plugin.ts", "text.ts"]
+  "include": ["plugin.ts", "ko.ts", "text.ts"]
 }

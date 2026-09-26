@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { TriggerRecord } from "@scm-js/plugin-api";
-import { compiledText, countLines, describeError, FENCE_CLOSE, fencedText, fenceOpen, gutterText, statusText } from "../text";
+import { countLines, describeError, FENCE_CLOSE, fencedText, fenceOpen, gutterText } from "../text";
 
 // The printer under test only needs to tell the records apart.
 const rec = (n: number) => ({ n }) as unknown as TriggerRecord;
@@ -44,12 +44,5 @@ describe("words", () => {
     expect(countLines("a\nb\n")).toBe(3);
     expect(gutterText(3, null)).toBe("1\n2\n3");
     expect(gutterText(3, 2)).toBe("1\n▶2\n3");
-  });
-
-  it("writes the status line", () => {
-    expect(statusText(1, false, "")).toBe("1 line · TrigEdit syntax · triggers (TRIG)");
-    expect(statusText(12, true, "Formatted.")).toBe("12 lines · TrigEdit syntax · mission briefing (MBRF) · Formatted.");
-    expect(compiledText(1, false)).toBe("Compiled 1 trigger.");
-    expect(compiledText(3, true)).toBe("Compiled 3 briefings.");
   });
 });

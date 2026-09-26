@@ -14,11 +14,15 @@
  * and the `trigedit.text` dialog slot — a row at the left of the footer, lent the editor's
  * `text` field — which is how the scmjs.dev plugin puts its Explain / Write / Ask buttons in.
  *
- * `text.ts` is the pure half (the fencing and the words) and has the tests. Plain DOM only,
+ * `text.ts` is the pure half (the fencing and the gutter) and has the tests. Plain DOM only,
  * in the editor's own widget classes plus a scoped stylesheet.
  */
 import type { DialogHandle, PluginApi } from "@scm-js/plugin-api";
-import { compiledText, countLines, describeError, fencedText, gutterText, statusText, type TextError } from "./text";
+import { countLines, describeError, fencedText, gutterText, type TextError } from "./text";
+import { KO } from "./ko";
+
+/** Marks English handed to the editor — a menu label, a command title — which it shows translated from this plugin's catalogue. */
+const msg = (text: string) => text;
 
 const STYLE = `
 .trigedit { display: flex; flex-direction: column; flex: 1; min-height: 0; gap: 10px; }
@@ -54,13 +58,15 @@ class TextTriggerEditor {
     this.api = api;
   }
 
+  private t = (text: string, params?: Record<string, string | number>) => this.api.i18n.t(text, params);
+
   isOpen(): boolean {
     return this.dialog?.isOpen() ?? false;
   }
 
   open(options: OpenOptions = {}): void {
     if (!this.api.document.isOpen()) {
-      this.api.ui.toast({ kind: "info", title: "Open a map first", detail: "The Text Trigger Editor edits the triggers of the open map." });
+      this.api.ui.toast({ kind: "info", title: this.t("Open a map first"), detail: this.t("The Text Trigger Editor edits the triggers of the open map.") });
       return;
     }
     if (this.isOpen()) {
@@ -73,13 +79,13 @@ class TextTriggerEditor {
     // eslint-disable-next-line @typescript-eslint/no-this-alias
     const self = this;
     this.dialog = this.api.ui.dialog({
-      title: "Text Trigger Editor",
+      title: this.t("Text Trigger Editor"),
       size: "full",
       mount: (body) => this.mount(body),
       buttons: [
-        { label: "Compile & Close", primary: true, run: () => this.compile() },
-        { label: "Cancel" },
-        { label: "Apply", closes: false, run: () => { this.compile(); } },
+        { label: this.t("Compile & Close"), primary: true, run: () => this.compile() },
+        { label: this.t("Cancel") },
+        { label: this.t("Apply"), closes: false, run: () => { this.compile(); } },
       ],
       // The slot other plugins add to: the text as the person sees it, and which list it is — read live.
       slot: {
@@ -98,7 +104,7 @@ class TextTriggerEditor {
   documentChanged(): void {
     if (!this.isOpen()) return;
     if (!this.api.document.isOpen()) { this.close(); return; }
-    this.load("Reloaded: the map changed.");
+    this.load(this.t("Reloaded: the map changed."));
   }
 
   /* ── The text and the map ─────────────────────────────── */
@@ -126,11 +132,13 @@ class TextTriggerEditor {
   private compile(): boolean {
     let count = 0;
     try {
-      this.api.document.update(this.briefing ? "Compile briefing" : "Compile triggers", (tx) => {
+      this.api.document.update(this.briefing ? this.t("Compile briefing") : this.t("Compile triggers"), (tx) => {
         count = (this.briefing ? tx.briefing : tx.triggers).fromText(this.text, { replace: true });
       });
       this.error = null;
-      this.status = compiledText(count, this.briefing);
+      this.status = this.briefing
+        ? this.t("{n, plural, one {Compiled # briefing.} other {Compiled # briefings.}}", { n: count })
+        : this.t("{n, plural, one {Compiled # trigger.} other {Compiled # triggers.}}", { n: count });
       this.render();
       return true;
     } catch (err) {
@@ -146,7 +154,7 @@ class TextTriggerEditor {
     const { text } = this.api.triggers;
     try {
       const parsed = text.parse(this.text, { briefing: this.briefing }).map((t) => t.trigger);
-      this.setText(text.print(parsed, { briefing: this.briefing }), { error: null, status: "Formatted." });
+      this.setText(text.print(parsed, { briefing: this.briefing }), { error: null, status: this.t("Formatted.") });
     } catch (err) {
       this.error = describeError(err);
       this.status = "";
@@ -165,15 +173,15 @@ class TextTriggerEditor {
 
   private mount(body: HTMLElement): () => void {
     const { widgets: w, el } = this.api.ui;
-    const triggers = w.checkbox("Triggers", { radio: true, name: "trigedit-list", value: !this.briefing, title: "TRIG — the map's triggers", onChange: (on) => { if (on) this.switchTo(false); } });
-    const briefing = w.checkbox("Briefing", { radio: true, name: "trigedit-list", value: this.briefing, title: "MBRF — the mission briefing, in the same syntax with the briefing actions", onChange: (on) => { if (on) this.switchTo(true); } });
+    const triggers = w.checkbox(this.t("Triggers"), { radio: true, name: "trigedit-list", value: !this.briefing, title: this.t("TRIG — the map's triggers"), onChange: (on) => { if (on) this.switchTo(false); } });
+    const briefing = w.checkbox(this.t("Briefing"), { radio: true, name: "trigedit-list", value: this.briefing, title: this.t("MBRF — the mission briefing, in the same syntax with the briefing actions"), onChange: (on) => { if (on) this.switchTo(true); } });
     this.radios = { triggers: triggers.input, briefing: briefing.input };
-    const wrap = w.checkbox("Word wrap", { value: this.wrap, onChange: (on) => { this.wrap = on; this.editorEl?.classList.toggle("wrap", on); } });
+    const wrap = w.checkbox(this.t("Word wrap"), { value: this.wrap, onChange: (on) => { this.wrap = on; this.editorEl?.classList.toggle("wrap", on); } });
     const bar = w.row(
       triggers, briefing,
-      w.button("Compile", { className: "sm", title: "Parse the text and put the result into the map; the map is untouched when a line does not parse", onClick: () => { this.compile(); } }),
-      w.button("Format", { className: "sm", title: "Parse and print the text again in the printer's layout", onClick: () => this.format() }),
-      w.button("Reload", { className: "sm", title: "Throw the text away and read the map again", onClick: () => this.load("Reloaded from the map.") }),
+      w.button(this.t("Compile"), { className: "sm", title: this.t("Parse the text and put the result into the map; the map is untouched when a line does not parse"), onClick: () => { this.compile(); } }),
+      w.button(this.t("Format"), { className: "sm", title: this.t("Parse and print the text again in the printer's layout"), onClick: () => this.format() }),
+      w.button(this.t("Reload"), { className: "sm", title: this.t("Throw the text away and read the map again"), onClick: () => this.load(this.t("Reloaded from the map.")) }),
       el("span", { className: "grow" }),
       wrap,
     );
@@ -196,22 +204,33 @@ class TextTriggerEditor {
     };
   }
 
+  /** The line under the editor: a count, the syntax, which list, and what just happened. */
+  private statusText(lines: number): string {
+    return [
+      this.t("{n, plural, one {# line} other {# lines}}", { n: lines }),
+      this.t("TrigEdit syntax"),
+      this.briefing ? this.t("mission briefing (MBRF)") : this.t("triggers (TRIG)"),
+      this.status,
+    ].filter(Boolean).join(" · ");
+  }
+
   private render(): void {
     if (!this.gutter || !this.statusEl) return;
     const lines = countLines(this.text);
     this.gutter.textContent = gutterText(lines, this.error?.line ?? null);
     if (this.gutter && this.textarea) this.gutter.scrollTop = this.textarea.scrollTop;
     this.statusEl.classList.toggle("error", this.error !== null);
-    this.statusEl.textContent = this.error ? this.error.message : statusText(lines, this.briefing, this.status);
+    this.statusEl.textContent = this.error ? this.error.message : this.statusText(lines);
   }
 }
 
 export default function activate(api: PluginApi): () => void {
+  api.i18n.register({ ko: KO });
   const editor = new TextTriggerEditor(api);
   const options = (v: unknown): OpenOptions => (typeof v === "object" && v !== null && "briefing" in v ? { briefing: (v as { briefing?: unknown }).briefing === true } : {});
 
-  api.commands.register({ id: "open", title: "Text Trigger Editor", enabled: () => api.document.isOpen(), run: (v) => editor.open(options(v)) });
-  api.menu.add("Triggers", { label: "Text Trigger Editor…", shortcut: "Ctrl+Shift+T", after: "Trigger Editor…", enabled: () => api.document.isOpen(), command: "open" });
+  api.commands.register({ id: "open", title: msg("Text Trigger Editor"), enabled: () => api.document.isOpen(), run: (v) => editor.open(options(v)) });
+  api.menu.add("Triggers", { label: msg("Text Trigger Editor…"), shortcut: "Ctrl+Shift+T", after: "Trigger Editor…", enabled: () => api.document.isOpen(), command: "open" });
   api.hotkeys.add("Ctrl+Shift+T", { command: "open" });
   api.events.on("document", () => editor.documentChanged());
 
