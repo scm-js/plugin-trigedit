@@ -1,6 +1,6 @@
 /**
  * TrigEdit — the Text Trigger Editor, a plugin for the scmJS map editor
- * (https://github.com/jeany55/scm-js).
+ * (https://github.com/scm-js/scm-js).
  *
  * Triggers ▸ Text Trigger Editor… (Ctrl+Shift+T) shows the map's triggers as text in
  * SCMDraft 2's TrigEdit syntax and compiles the text back into the map. The syntax, the
