@@ -1,71 +1,80 @@
 # TrigEdit
 
-A plugin for [scmJS](https://github.com/scm-js/scm-js), the browser-based StarCraft 1 /
-Brood War map editor. It is the **Text Trigger Editor**: the map's triggers as text, in
-the syntax of SCMDraft 2's TrigEdit, so text from SCMDraft pastes in and text from here
-pastes back out.
+TrigEdit is the Text Trigger Editor for [scmJS](https://scmjs.dev/editor/), the StarCraft
+and Brood War map editor that runs in the browser. It shows the map's triggers as text in the
+syntax of SCMDraft 2's TrigEdit. Text from SCMDraft pastes in, and text from here pastes back
+into SCMDraft.
 
-The format itself — the printer and the parser — belongs to the editor, and File ▸ Import
-Triggers / Export Triggers read and write the same text. This plugin is the editor around
-it: a Triggers / Briefing switch, Compile, Format and Reload, word wrap, a gutter that
-marks the line that did not parse, and a comment fence around every run of triggers
-another plugin generates, so you can see which rows a rebuild will replace.
+The text format itself belongs to the editor, and **Triggers ▸ Import Triggers…** and
+**Export Triggers…** read and write the same text. This plugin is the editing window around
+it.
 
 ## Install
 
-In scmJS: **Plugins ▸ Manage Plugins…**, paste
+TrigEdit comes with scmJS but starts off. Open **Plugins ▸ Manage Plugins…**, find TrigEdit
+(marked *default*) and tick it on.
+
+If it is not in the list, paste
 
 ```
 https://github.com/scm-js/plugin-trigedit
 ```
 
-and press **Add**. It is normally already in that list, marked *default*; tick it on if it
-is off. To pin a version, add a ref: `github:scm-js/plugin-trigedit@v1.0.0`.
+and press **Add**. To pin a version, add a tag: `github:scm-js/plugin-trigedit@v1.1.0`.
 
 ## Use
 
-**Triggers ▸ Text Trigger Editor…**, or `Ctrl+Shift+T`, with a map open.
+Open a map and choose **Triggers ▸ Text Trigger Editor…** (Ctrl+Shift+T).
 
-- **Compile** parses the text and puts the result into the map, replacing the list. The
-  map is untouched when a line does not parse: the line is marked in the gutter and the
-  message is under the editor. **Apply** is the same without closing; **Compile & Close**
-  closes when it compiled.
-- **Format** parses and prints the text again, in the printer's own layout.
-- **Reload** throws the text away and reads the map again.
-- **Triggers / Briefing** switches between the map's triggers (TRIG) and the mission
-  briefing (MBRF), which uses the same syntax with the briefing action set. Switching
-  re-reads the map, so compile first.
-- **Word wrap** wraps long lines instead of scrolling sideways.
+- **Compile** parses the text and replaces the map's triggers with the result. If a line does
+  not parse, the map is not changed. The line is marked in the gutter and the message shows
+  under the text. **Apply** does the same and keeps the window open. **Compile & Close**
+  closes the window once the text has compiled.
+- **Format** parses the text and prints it again in the standard layout.
+- **Reload** discards the text and reads the map again.
+- **Triggers** and **Briefing** switch between the map's triggers (TRIG) and the mission
+  briefing (MBRF), which uses the same syntax with the briefing actions. Switching reads the
+  map again, so compile first.
+- **Word wrap** wraps long lines.
 
-The text follows SCMDraft 2's TrigEdit: one `Trigger("Player 1", "Player 2"){ … }` block
-per trigger with `Conditions:` and `Actions:` sections, a leading `;` disabling a line, and
-a `Flags:` block for the trigger flags SCMDraft has no syntax for. Names are the map's own
-— units, locations, switches and strings resolve against the open map — and a name the
-map does not know prints as a bare number and parses back. The editor's guide has a
-[section on the syntax](https://github.com/scm-js/scm-js#the-text-trigger-editor).
+The text follows SCMDraft 2's TrigEdit:
+
+- Each trigger is a `Trigger("Player 1", "Player 2"){ … }` block with `Conditions:` and
+  `Actions:` sections.
+- A leading `;` disables a line.
+- A `Flags:` block holds the trigger flags that SCMDraft has no syntax for.
+- Units, locations, switches and strings are written by their names in the open map. A name
+  the map does not know prints as a number and parses back.
+
+The scmJS guide has a [section on the Text Trigger
+Editor](https://docs.scmjs.dev/guide/triggers/#the-text-trigger-editor), and the [trigger
+reference](https://docs.scmjs.dev/triggers/) gives the text line for every condition and
+action.
 
 ### Generated triggers
 
-A plugin that builds triggers from something else — TrigScript builds a block from its
-script — tells the editor which run of the list is its. This editor fences that run in
-comments:
+Some plugins build triggers from something else. TrigScript, for example, builds a block of
+triggers from its script. Such a plugin tells the editor which triggers in the list are its
+own, and TrigEdit fences them in comments:
 
 ```
-//== Generated by the trigger script: 12 triggers. Edit them there instead — changes here take them out of its hands. ==//
+//== Generated by <plugin>: 12 triggers. Edit them there instead — changes here take them out of its hands. ==//
+…
+//== End of the generated run ==//
 ```
 
-The fence is a comment to the parser, so the text compiles back to the same list, generated
-triggers included. Editing inside the fence works, but the next build of the script will
-replace the whole run.
+The parser treats the fence as a comment, so the text compiles back to the same list,
+generated triggers included. You can edit inside the fence, but the plugin's next build
+replaces those triggers.
 
 ## For other plugins
 
-- The `trigedit.open` command opens the editor: `api.commands.run("trigedit.open", { briefing: true })`
-  for the briefing.
-- The dialog offers the `trigedit.text` slot. `api.ui.dialogSlot("trigedit.text", { mount })` puts
-  a row at the left of the footer; `host.fields.text` is the editor's text as the person sees it,
-  and `host.payload.briefing` says which list is shown. This is how the scmjs.dev plugin adds its
-  *Explain*, *Write…* and *Ask* buttons.
+- The `trigedit.open` command opens the editor. `api.commands.run("trigedit.open", { briefing: true })`
+  opens it on the briefing.
+- The dialog has a `trigedit.text` slot. `api.ui.dialogSlot("trigedit.text", { mount })` adds a
+  row at the left of the footer. `host.fields.text` is the editor's text as the user sees it,
+  and `host.payload.briefing` says which list is shown. The scmjs.dev plugin adds its
+  *Explain*, *Write…* and *Ask* buttons this way.
 
 ## Development
 
@@ -76,14 +85,17 @@ npm test            # vitest: the fencing and the words
 npm run build       # esbuild → dist/plugin.js, the bundle the editor loads
 ```
 
-`plugin.ts` is the dialog; `text.ts` is the pure half (the fencing, the error line, the
-status line) and has the tests. The editor is reached through `api.triggers.text` (print
-and parse), `api.triggers.claims` (the generated runs) and `tx.triggers.fromText` /
-`tx.briefing.fromText` inside one `document.update`. Plain DOM in the editor's own widget
-classes, plus a scoped stylesheet.
+`plugin.ts` is the dialog. `text.ts` holds the logic with no UI (the fencing, the error line,
+the status line) and has the tests. The plugin uses:
 
-CI type-checks, tests and rebuilds `dist/plugin.js` on every push to `main`; at a `v*` tag
-it checks that the committed bundle is what the source builds to.
+- `api.triggers.text` to print and parse
+- `api.triggers.claims` for the generated triggers
+- `tx.triggers.fromText` and `tx.briefing.fromText`, inside one `document.update`
+
+The UI is plain DOM using the editor's widget classes, plus a scoped stylesheet.
+
+CI type-checks, tests and rebuilds `dist/plugin.js` on every push to `main`. At a `v*` tag it
+checks that the committed bundle matches what the source builds.
 
 ## License
 
